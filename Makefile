@@ -1,18 +1,11 @@
 SOURCES = src/devices/audio.c src/devices/controller.c src/devices/datetime.c src/devices/file.c src/devices/mouse.c src/devices/screen.c src/devices/system.c src/uxn.c src/uxnemu.c 
 
-PROGRAM = uxnatr
+PROGRAM = uxnatr.xex
 
-ifdef CC65_TARGET
+CC65_TARGET = atari
 CC      = cl65
 CFLAGS  = -t $(CC65_TARGET) --create-dep $(<:.c=.d) -O
 LDFLAGS = -t $(CC65_TARGET) -m $(PROGRAM).map
-else
-CC      = gcc
-CFLAGS  = -MMD -MP -O
-LDFLAGS = -Wl,-Map,$(PROGRAM).map
-endif
-
-########################################
 
 .SUFFIXES:
 .PHONY: all clean

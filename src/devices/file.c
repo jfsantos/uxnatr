@@ -49,7 +49,7 @@ reset(void)
 static Uint16
 get_entry(char *p, Uint16 len, const char *pathname, const char *basename, int fail_nonzero)
 {
-	struct stat st;
+/*	struct stat st;
 	if(len < strlen(basename) + 7)
 		return 0;
 	if(stat(pathname, &st))
@@ -60,6 +60,8 @@ get_entry(char *p, Uint16 len, const char *pathname, const char *basename, int f
 		return snprintf(p, len, "%04x %s\n", (Uint16)st.st_size, basename);
 	else
 		return snprintf(p, len, "???? %s\n", basename);
+*/
+	return 0; // no files for you
 }
 
 static Uint16
