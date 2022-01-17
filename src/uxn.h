@@ -43,12 +43,12 @@ typedef struct Device {
 } Device;
 
 typedef struct Uxn {
-	Uint8 *ram, *devpage;
+	Uint8 *ram;
 	Stack *wst, *rst;
 	Device dev[16];
 } Uxn;
 
-int uxn_boot(Uxn *u, Uint8 *ram, Uint8 *devpage, Stack *wst, Stack *rst);
+int uxn_boot(Uxn *u, Uint8 *ram, Stack *wst, Stack *rst);
 int uxn_eval(Uxn *u, Uint16 pc);
 int uxn_halt(Uxn *u, Uint8 error, Uint16 addr);
 Device *uxn_port(Uxn *u, Uint8 id, Uint8 (*deifn)(Device *, Uint8), void (*deofn)(Device *, Uint8));

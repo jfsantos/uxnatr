@@ -1,16 +1,17 @@
+#include <conio.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
 #include "uxn.h"
 
-/* #include "devices/system.h"
+#include "devices/system.h"
 #include "devices/screen.h"
 #include "devices/audio.h"
 #include "devices/file.h"
 #include "devices/controller.h"
 #include "devices/mouse.h"
 #include "devices/datetime.h"
-*/
 
 /*
 Copyright (c) 2021 Devine Lu Linvega
@@ -74,6 +75,7 @@ console_deo(Device *d, Uint8 port)
 static Uint8
 audio_dei(Device *d, Uint8 port)
 {
+	return 0;
 }
 
 static void
@@ -100,27 +102,25 @@ static int
 load(Uxn *u, char *rom)
 {
 	int r;
-	r = f->read(f, u->ram + PAGE_PROGRAM, 1, 0x10000 - PAGE_PROGRAM);
-	f->close(f);
+	FILE* f;
+	if(!(f = fopen(rom, "rb"))) return 0;
+	r = fread(u->ram + PAGE_PROGRAM, 1, 0x10000 - PAGE_PROGRAM, f);
+	fclose(f);
 	if(r < 1) return 0;
 	fprintf(stderr, "Loaded %s\n", rom);
 	return 1;
 }
 
-static Uint8 *shadow, *memory;
+static Uint8 *memory;
 
 static int
 start(Uxn *u, char *rom)
 {
-	memory = (Uint8 *)calloc(0x10000, sizeof(Uint8));
-	shadow = (Uint8 *)calloc(0x10000, sizeof(Uint8));
+	memory = (Uint8 *)calloc(0xF000, sizeof(Uint8));
 
-	if(!uxn_boot(&supervisor, shadow, shadow + VISOR_DEV, (Stack *)(shadow + VISOR_WST), (Stack *)(shadow + VISOR_RST)))
+	// TODO: stacks should be on page 0, not at the end of the memory
+	if(!uxn_boot(u, memory, (Stack *)(memory + PAGE_WST), (Stack *)(memory + PAGE_RST)))
 		return error("Boot", "Failed to start uxn.");
-	if(!uxn_boot(u, memory, shadow + PAGE_DEV, (Stack *)(shadow + PAGE_WST), (Stack *)(shadow + PAGE_RST)))
-		return error("Boot", "Failed to start uxn.");
-	if(!load(&supervisor, "supervisor.rom"))
-		error("Supervisor", "No debugger found.");
 	if(!load(u, rom))
 		return error("Boot", "Failed to load rom.");
 
@@ -140,14 +140,6 @@ start(Uxn *u, char *rom)
 	/* unused   */ uxn_port(u, 0xd, nil_dei, nil_deo);
 	/* unused   */ uxn_port(u, 0xe, nil_dei, nil_deo);
 	/* unused   */ uxn_port(u, 0xf, nil_dei, nil_deo);
-
-	/* Supervisor */
-	uxn_port(&supervisor, 0x0, system_dei, system_deo);
-	uxn_port(&supervisor, 0x1, nil_dei, console_deo);
-	uxn_port(&supervisor, 0x2, screen_dei, screen_deo);
-	uxn_port(&supervisor, 0x8, nil_dei, nil_deo);
-
-	uxn_eval(&supervisor, PAGE_PROGRAM);
 
 	if(!uxn_eval(u, PAGE_PROGRAM))
 		return error("Boot", "Failed to start rom.");
@@ -172,8 +164,6 @@ static int
 run(Uxn *u)
 {
 	while(!devsystem->dat[0xf]) {
-		if(devsystem->dat[0xe])
-			uxn_eval(&supervisor, GETVECTOR(&supervisor.dev[2]));
 		uxn_eval(u, GETVECTOR(devscreen));
 	}
 	return error("Run", "Ended.");
